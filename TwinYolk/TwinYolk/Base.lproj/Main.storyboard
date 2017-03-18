@@ -1,14 +1,19 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11134" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11106"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModuleProvider="" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="ViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -16,8 +21,48 @@
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="DbN-XC-Rsw">
+                                <rect key="frame" x="15" y="30" width="345" height="194"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="DbN-XC-Rsw" secondAttribute="height" multiplier="16:9" id="fCe-ls-PFR"/>
+                                </constraints>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="uR5-EY-Fus">
+                                <rect key="frame" x="15" y="229" width="345" height="194"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="uR5-EY-Fus" secondAttribute="height" multiplier="16:9" id="jfW-cZ-xig"/>
+                                </constraints>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="tnD-FV-ocq">
+                                <rect key="frame" x="15" y="428.5" width="345" height="194"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="tnD-FV-ocq" secondAttribute="height" multiplier="16:9" id="9WJ-aV-qEs"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="DbN-XC-Rsw" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="1eJ-s2-zto"/>
+                            <constraint firstItem="DbN-XC-Rsw" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="15" id="5AI-7w-Dp2"/>
+                            <constraint firstItem="tnD-FV-ocq" firstAttribute="width" secondItem="tnD-FV-ocq" secondAttribute="height" multiplier="16:9" id="D98-l6-UKB"/>
+                            <constraint firstItem="uR5-EY-Fus" firstAttribute="width" secondItem="DbN-XC-Rsw" secondAttribute="width" id="DHU-r3-KX5"/>
+                            <constraint firstItem="uR5-EY-Fus" firstAttribute="width" secondItem="uR5-EY-Fus" secondAttribute="height" multiplier="16:9" id="Eap-aa-03s"/>
+                            <constraint firstItem="uR5-EY-Fus" firstAttribute="top" secondItem="DbN-XC-Rsw" secondAttribute="bottom" constant="5" id="GO4-41-sq0"/>
+                            <constraint firstItem="tnD-FV-ocq" firstAttribute="top" secondItem="uR5-EY-Fus" secondAttribute="bottom" constant="5" id="Jrm-DE-3in"/>
+                            <constraint firstItem="tnD-FV-ocq" firstAttribute="width" secondItem="uR5-EY-Fus" secondAttribute="width" id="XNr-YB-3wq"/>
+                            <constraint firstItem="tnD-FV-ocq" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="YQA-S2-OuB"/>
+                            <constraint firstItem="DbN-XC-Rsw" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="10" id="eCO-RN-yhZ"/>
+                            <constraint firstItem="tnD-FV-ocq" firstAttribute="width" secondItem="tnD-FV-ocq" secondAttribute="height" multiplier="16:9" id="h4x-4G-h90"/>
+                            <constraint firstAttribute="trailing" secondItem="DbN-XC-Rsw" secondAttribute="trailing" constant="15" id="qYz-Vr-ksx"/>
+                            <constraint firstItem="uR5-EY-Fus" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="wMd-TM-5gv"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="imageViewBlend" destination="tnD-FV-ocq" id="7B9-iK-Dat"/>
+                        <outlet property="imageViewL" destination="DbN-XC-Rsw" id="bac-Hr-7hk"/>
+                        <outlet property="imageViewR" destination="uR5-EY-Fus" id="oBy-yQ-Xxa"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
