@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		632D3FAB1E8100A6001B5587 /* graph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FA81E8100A6001B5587 /* graph.cpp */; };
+		632D3FAC1E8100A6001B5587 /* maxflow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FAA1E8100A6001B5587 /* maxflow.cpp */; };
+		632D3FAE1E810102001B5587 /* instances.inc in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FAD1E810102001B5587 /* instances.inc */; };
 		6336EA6D1E7D7ADE00B4B774 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6336EA6C1E7D7ADE00B4B774 /* main.m */; };
 		6336EA701E7D7ADE00B4B774 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6336EA6F1E7D7ADE00B4B774 /* AppDelegate.m */; };
 		6336EA731E7D7ADE00B4B774 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6336EA721E7D7ADE00B4B774 /* ViewController.mm */; };
@@ -25,6 +28,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		632D3FA71E8100A6001B5587 /* block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = block.h; sourceTree = "<group>"; };
+		632D3FA81E8100A6001B5587 /* graph.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = graph.cpp; sourceTree = "<group>"; };
+		632D3FA91E8100A6001B5587 /* graph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = graph.h; sourceTree = "<group>"; };
+		632D3FAA1E8100A6001B5587 /* maxflow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = maxflow.cpp; sourceTree = "<group>"; };
+		632D3FAD1E810102001B5587 /* instances.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; path = instances.inc; sourceTree = "<group>"; };
 		6336EA681E7D7ADE00B4B774 /* TwinYolk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TwinYolk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6336EA6C1E7D7ADE00B4B774 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		6336EA6E1E7D7ADE00B4B774 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -63,6 +71,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		632D3FA61E8100A6001B5587 /* MaxFlow */ = {
+			isa = PBXGroup;
+			children = (
+				632D3FAD1E810102001B5587 /* instances.inc */,
+				632D3FA71E8100A6001B5587 /* block.h */,
+				632D3FA81E8100A6001B5587 /* graph.cpp */,
+				632D3FA91E8100A6001B5587 /* graph.h */,
+				632D3FAA1E8100A6001B5587 /* maxflow.cpp */,
+			);
+			path = MaxFlow;
+			sourceTree = "<group>";
+		};
 		6336EA5F1E7D7ADE00B4B774 = {
 			isa = PBXGroup;
 			children = (
@@ -138,6 +158,7 @@
 		6336EA901E7D810400B4B774 /* Library */ = {
 			isa = PBXGroup;
 			children = (
+				632D3FA61E8100A6001B5587 /* MaxFlow */,
 				6336EA911E7D810400B4B774 /* opencv2.framework */,
 			);
 			path = Library;
@@ -232,7 +253,10 @@
 			files = (
 				6336EA731E7D7ADE00B4B774 /* ViewController.mm in Sources */,
 				6336EA701E7D7ADE00B4B774 /* AppDelegate.m in Sources */,
+				632D3FAB1E8100A6001B5587 /* graph.cpp in Sources */,
+				632D3FAE1E810102001B5587 /* instances.inc in Sources */,
 				6336EA6D1E7D7ADE00B4B774 /* main.m in Sources */,
+				632D3FAC1E8100A6001B5587 /* maxflow.cpp in Sources */,
 				6336EA8F1E7D7CFD00B4B774 /* UIImage+CVMat.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -400,6 +424,7 @@
 				6336EA811E7D7ADE00B4B774 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

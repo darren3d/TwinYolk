@@ -14,6 +14,9 @@
 
 using namespace cv;
 
+#include "graph.h"
+typedef Graph<int,int,int> GraphType;
+
 typedef struct ElementRGBA {
     uchar r, g, b, a;
 }ElementRGBA;
@@ -162,7 +165,7 @@ typedef struct ElementRGB {
             }
         }
         
-        matR = matBlurR;
+//        matR = matBlurR;
         
         cv::Mat maskLErode;
         Mat kernel(5,5,CV_8U,Scalar(1));
@@ -171,20 +174,133 @@ typedef struct ElementRGB {
     }
     
     
-    
+    [self testSeamCutWithMatL:matRectifyL
+                         matR:matR
+                         mask:maskL];
 
-//    matRectifyL.mul(maskL);
-    matRectifyL = 0.5*matRectifyL + 0.5*matR;
-    
-    matRectifyL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
-    maskL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
-    matR.copyTo(Mat(matTitled, cv::Rect(matL.cols, 0, matR.cols, matR.rows)));
-    
-    self.imageBlend = [UIImage initWithCVMat:matTitled];
+////    matRectifyL.mul(maskL);
+//    matRectifyL = 0.5*matRectifyL + 0.5*matR;
+//    
+//    matRectifyL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
+//    maskL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
+//    matR.copyTo(Mat(matTitled, cv::Rect(matL.cols, 0, matR.cols, matR.rows)));
+//    
+//    self.imageBlend = [UIImage initWithCVMat:matTitled];
     
     
     
 //    seamlessClone(<#InputArray src#>, <#InputArray dst#>, <#InputArray mask#>, <#Point p#>, <#OutputArray blend#>, <#int flags#>)
+}
+
+- (void)testSeamCutWithMatL:(cv::Mat &)matL
+                       matR:(cv::Mat &)matR
+                       mask:(cv::Mat)mask  {
+    cv::Mat graphcut;
+    cv::Mat graphcut_and_cutline;
+    
+    int overlap_width = 100;
+    int xoffset = matL.cols/2 - overlap_width/2;
+    
+    Mat no_graphcut(matL.rows, matL.cols, matL.type());
+    
+    matL.copyTo(no_graphcut(cv::Rect(0, 0, matL.cols, matL.rows)));
+    matR.copyTo(no_graphcut(cv::Rect(0, 0, matR.cols, matR.rows)));
+    
+    int est_nodes = matL.rows * overlap_width;
+    int est_edges = est_nodes * 4;
+    
+    GraphType g(est_nodes, est_edges);
+    
+    for(int i=0; i < est_nodes; i++) {
+        g.add_node();
+    }
+    
+    // Set the source/sink weights
+    for(int y=0; y < matL.rows; y++) {
+        g.add_tweights(y*overlap_width + 0, INT_MAX, 0);
+        g.add_tweights(y*overlap_width + overlap_width-1, 0, INT_MAX);
+    }
+    
+    // Set edge weights
+    for(int y=0; y < matL.rows; y++) {
+        for(int x=0; x < overlap_width; x++) {
+            int idx = y*overlap_width + x;
+            
+            Vec3b a0 = matL.at<Vec3b>(y, xoffset + x);
+            Vec3b b0 = matR.at<Vec3b>(y, xoffset + x);
+            double cap0 = norm(a0, b0);
+            
+            // Add right edge
+            if(x+1 < overlap_width) {
+                Vec3b a1 = matL.at<Vec3b>(y, xoffset + x + 1);
+                Vec3b b1 = matR.at<Vec3b>(y, xoffset + x + 1);
+                
+                double cap1 = norm(a1, b1);
+                
+                g.add_edge(idx, idx + 1, (int)(cap0 + cap1), (int)(cap0 + cap1));
+            }
+            
+            // Add bottom edge
+            if(y+1 < matL.rows) {
+                Vec3b a2 = matL.at<Vec3b>(y+1, xoffset + x);
+                Vec3b b2 = matR.at<Vec3b>(y+1, xoffset + x);
+                
+                double cap2 = norm(a2, b2);
+                
+                g.add_edge(idx, idx + overlap_width, (int)(cap0 + cap2), (int)(cap0 + cap2));
+            }
+        }
+    }
+    
+    int flow = g.maxflow();
+    std::cout << "max flow: " << flow << std::endl;
+    
+    graphcut = no_graphcut.clone();
+    graphcut_and_cutline = no_graphcut.clone();
+    
+    int idx = 0;
+    for(int y=0; y < matL.rows; y++) {
+        for(int x=0; x < overlap_width; x++) {
+            if(g.what_segment(idx) == GraphType::SOURCE) {
+                graphcut.at<Vec3b>(y, xoffset + x) = matL.at<Vec3b>(y, xoffset + x);
+            }
+            else {
+                graphcut.at<Vec3b>(y, xoffset + x) = matR.at<Vec3b>(y, xoffset + x);
+            }
+            
+            graphcut_and_cutline.at<Vec3b>(y, xoffset + x) =  graphcut.at<Vec3b>(y, xoffset + x);
+            
+            // Draw the cut
+            if(x+1 < overlap_width) {
+                if(g.what_segment(idx) != g.what_segment(idx+1)) {
+                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x) = Vec3b(0,0255,0);
+                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x + 1) = Vec3b(0,255,0);
+                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x - 1) = Vec3b(0,255,0);
+                }
+            }
+            
+            // Draw the cut
+            if(y > 0 && y+1 < matL.rows) {
+                if(g.what_segment(idx) != g.what_segment(idx + overlap_width)) {
+                    graphcut_and_cutline.at<Vec3b>(y-1, xoffset + x) = Vec3b(0,255,0);
+                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x) = Vec3b(0,255,0);
+                    graphcut_and_cutline.at<Vec3b>(y+1, xoffset + x) = Vec3b(0,255,0);
+                }
+            }
+            
+            idx++;
+        }
+    }
+    
+    
+    UIImage *imageNoGraphCut = [UIImage initWithCVMat:no_graphcut];
+    UIImage *imageGraphCut = [UIImage initWithCVMat:graphcut];
+    UIImage *imageGraphCutLine = [UIImage initWithCVMat:graphcut_and_cutline];
+    
+    self.imageL = imageNoGraphCut;
+    self.imageR = imageGraphCut;
+    self.imageBlend = imageGraphCutLine;
+
 }
 
 
