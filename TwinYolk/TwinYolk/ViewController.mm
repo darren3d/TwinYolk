@@ -139,72 +139,116 @@ typedef struct ElementRGB {
         temp.setTo(cv::Scalar::all(255));
         cv::warpPerspective(temp, maskL, homo, cv::Size(matRectifyL.cols, matRectifyL.rows), INTER_NEAREST);
     }
-    {
-        cv::Mat matBlurL, matBlurR;
-        cv::adaptiveBilateralFilter(matRectifyL, matBlurL, cv::Size(11, 11), 6, 20);
-        cv::adaptiveBilateralFilter(matR, matBlurR, cv::Size(11, 11), 6, 20);
-        
-        for (int i = 0; i < matRectifyL.rows; i++) {
-            ElementRGB *eleMask = maskL.ptr<ElementRGB>(i);
-            ElementRGB *eleL = matBlurL.ptr<ElementRGB>(i);
-            ElementRGB *eleR = matBlurR.ptr<ElementRGB>(i);
-            for (int j = 0; j < matRectifyL.cols; j++) {
-//                eleMask[j].a = 255;
-                if (eleMask[j].r == 255) {
-                    float diff = (eleL[j].r - eleR[j].r) * (float)(eleL[j].r - eleR[j].r);
-                    diff += (eleL[j].g - eleR[j].g) * (float)(eleL[j].g - eleR[j].g);
-                    diff += (eleL[j].b - eleR[j].b) * (float)(eleL[j].b - eleR[j].b);
-                    diff = sqrtf(diff*0.33333f);
-//                    diff = (diff - 1)/diff;
-//                    diff *= 255;
-                    
-                    eleMask[j].r = diff;
-                    eleMask[j].g = diff;
-                    eleMask[j].b = diff;
-                }
-            }
-        }
-        
-//        matR = matBlurR;
-        
-        cv::Mat maskLErode;
-        Mat kernel(5,5,CV_8U,Scalar(1));
-        cv::erode(maskL, maskLErode, kernel, cv::Point(-1,-1), 2);
-        cv::dilate(maskLErode, maskL, kernel, cv::Point(-1,-1), 2);
-    }
-    
     
     [self testSeamCutWithMatL:matRectifyL
                          matR:matR
-                         mask:maskL];
+                        maskL:maskL];
+    return;
 
-////    matRectifyL.mul(maskL);
+//    matRectifyL.mul(maskL);
 //    matRectifyL = 0.5*matRectifyL + 0.5*matR;
-//    
-//    matRectifyL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
-//    maskL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
-//    matR.copyTo(Mat(matTitled, cv::Rect(matL.cols, 0, matR.cols, matR.rows)));
-//    
-//    self.imageBlend = [UIImage initWithCVMat:matTitled];
+    
+    cv::Mat edgeL;
+    cv::Sobel(matL, edgeL, matL.channels(), 1, 1);
+    if(edgeL.channels() == 1){
+        vector<cv::Mat>temp;
+        temp.push_back(edgeL);
+        temp.push_back(edgeL);
+        temp.push_back(edgeL);
+        cv::merge(temp, edgeL);
+    }
+    
+    cv::Mat edgeR;
+    cv::Sobel(matR, edgeR, matR.channels(), 1, 1);
+    if(edgeR.channels() == 1){
+        vector<cv::Mat>temp;
+        temp.push_back(edgeR);
+        temp.push_back(edgeR);
+        temp.push_back(edgeR);
+        cv::merge(temp, edgeR);
+    }
+    
+    cv::Mat maskEdge;
+    cv::Sobel(maskL, maskEdge, maskL.channels(), 1, 1);
+    if(maskEdge.channels() == 1){
+        vector<cv::Mat>temp;
+        temp.push_back(maskEdge);
+        temp.push_back(maskEdge);
+        temp.push_back(maskEdge);
+        cv::merge(temp, maskEdge);
+    }
+
+    
+    edgeL.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
+    maskEdge.copyTo(Mat(matTitled, cv::Rect(0, 0, matL.cols, matL.rows)));
+    edgeR.copyTo(Mat(matTitled, cv::Rect(matL.cols, 0, matR.cols, matR.rows)));
+    
+    self.imageBlend = [UIImage initWithCVMat:matTitled];
     
     
     
 //    seamlessClone(<#InputArray src#>, <#InputArray dst#>, <#InputArray mask#>, <#Point p#>, <#OutputArray blend#>, <#int flags#>)
 }
 
+- (cv::Rect)getMaxCommonRectFromMask:(const cv::Mat &)mask {
+    int minX = mask.cols-1, maxX = 0, minY = mask.rows - 1, maxY = 0;
+    for (int i=0; i<mask.rows; i++) {
+        const uchar *maskData = mask.ptr<uchar>(i);
+        for (int j=0; j<mask.cols; j++) {
+            if (maskData[j] > 65) {
+                minX = MIN(minX, j);
+                maxX = MAX(maxX, j);
+                
+                minY = MIN(minY, i);
+                maxY = MAX(maxY, i);
+            }
+        }
+    }
+    
+    cv::Rect rect(minX, minY, maxX-minX+1, maxY-minY+1);
+    return rect;
+}
+
 - (void)testSeamCutWithMatL:(cv::Mat &)matL
                        matR:(cv::Mat &)matR
-                       mask:(cv::Mat)mask  {
-    cv::Mat graphcut;
-    cv::Mat graphcut_and_cutline;
+                       maskL:(cv::Mat)maskL  {
+    cv::Mat matDiff(matL.rows, matL.cols, CV_8UC1);
+    {
+        matDiff.setTo(cv::Scalar::all(0));
+        cv::Mat matBlurL, matBlurR;
+        cv::adaptiveBilateralFilter(matL, matBlurL, cv::Size(11, 11), 6, 20);
+        cv::adaptiveBilateralFilter(matR, matBlurR, cv::Size(11, 11), 6, 20);
+        
+        for (int i = 0; i < matL.rows; i++) {
+            uchar *eleDiff = matDiff.ptr<uchar>(i);
+            ElementRGB *eleMask = maskL.ptr<ElementRGB>(i);
+            ElementRGB *eleL = matBlurL.ptr<ElementRGB>(i);
+            ElementRGB *eleR = matBlurR.ptr<ElementRGB>(i);
+            for (int j = 0; j < matL.cols; j++) {
+                //                eleMask[j].a = 255;
+                if (eleMask[j].r == 255) {
+                    float diff = (eleL[j].r - eleR[j].r) * (float)(eleL[j].r - eleR[j].r);
+                    diff += (eleL[j].g - eleR[j].g) * (float)(eleL[j].g - eleR[j].g);
+                    diff += (eleL[j].b - eleR[j].b) * (float)(eleL[j].b - eleR[j].b);
+                    diff = sqrtf(diff*0.33333f);
+                    //                    diff = (diff - 1)/diff;
+                    eleDiff[j] = floorf(diff);
+                }
+            }
+        }
+        
+        //        matR = matBlurR;
+        
+        cv::Mat matDiffErode;
+        Mat kernel(5,5,CV_8U,Scalar(1));
+        cv::erode(matDiff, matDiffErode, kernel, cv::Point(-1,-1), 2);
+        cv::dilate(matDiffErode, matDiff, kernel, cv::Point(-1,-1), 2);
+    }
     
-    int overlap_width = 100;
-    int xoffset = matL.cols/2 - overlap_width/2;
+    cv::Rect rect = [self getMaxCommonRectFromMask:matDiff];
     
-    Mat no_graphcut(matL.rows, matL.cols, matL.type());
-    
-    matL.copyTo(no_graphcut(cv::Rect(0, 0, matL.cols, matL.rows)));
-    matR.copyTo(no_graphcut(cv::Rect(0, 0, matR.cols, matR.rows)));
+    int overlap_width = rect.size().width;
+    int xoffset = rect.x;
     
     int est_nodes = matL.rows * overlap_width;
     int est_edges = est_nodes * 4;
@@ -255,51 +299,33 @@ typedef struct ElementRGB {
     int flow = g.maxflow();
     std::cout << "max flow: " << flow << std::endl;
     
-    graphcut = no_graphcut.clone();
-    graphcut_and_cutline = no_graphcut.clone();
-    
     int idx = 0;
     for(int y=0; y < matL.rows; y++) {
+        idx = y*overlap_width;
+        int maxX = 0;
         for(int x=0; x < overlap_width; x++) {
-            if(g.what_segment(idx) == GraphType::SOURCE) {
-                graphcut.at<Vec3b>(y, xoffset + x) = matL.at<Vec3b>(y, xoffset + x);
+            if(g.what_segment(idx) != GraphType::SOURCE) {
+                maxX = xoffset + x;
+                break;
             }
-            else {
-                graphcut.at<Vec3b>(y, xoffset + x) = matR.at<Vec3b>(y, xoffset + x);
-            }
-            
-            graphcut_and_cutline.at<Vec3b>(y, xoffset + x) =  graphcut.at<Vec3b>(y, xoffset + x);
-            
-            // Draw the cut
-            if(x+1 < overlap_width) {
-                if(g.what_segment(idx) != g.what_segment(idx+1)) {
-                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x) = Vec3b(0,0255,0);
-                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x + 1) = Vec3b(0,255,0);
-                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x - 1) = Vec3b(0,255,0);
-                }
-            }
-            
-            // Draw the cut
-            if(y > 0 && y+1 < matL.rows) {
-                if(g.what_segment(idx) != g.what_segment(idx + overlap_width)) {
-                    graphcut_and_cutline.at<Vec3b>(y-1, xoffset + x) = Vec3b(0,255,0);
-                    graphcut_and_cutline.at<Vec3b>(y, xoffset + x) = Vec3b(0,255,0);
-                    graphcut_and_cutline.at<Vec3b>(y+1, xoffset + x) = Vec3b(0,255,0);
-                }
-            }
-            
             idx++;
+        }
+        
+        ElementRGB *eleMask = maskL.ptr<ElementRGB>(y);
+        for (int x=maxX+1; x<maskL.cols; x++) {
+            eleMask[x].r = 0;
+            eleMask[x].g = 0;
+            eleMask[x].b = 0;
         }
     }
     
+    cv::Mat matBlend = matR.clone();
+    matL.copyTo(matBlend, maskL);
     
-    UIImage *imageNoGraphCut = [UIImage initWithCVMat:no_graphcut];
-    UIImage *imageGraphCut = [UIImage initWithCVMat:graphcut];
-    UIImage *imageGraphCutLine = [UIImage initWithCVMat:graphcut_and_cutline];
     
-    self.imageL = imageNoGraphCut;
-    self.imageR = imageGraphCut;
-    self.imageBlend = imageGraphCutLine;
+    self.imageL = [UIImage initWithCVMat:matL];
+    self.imageR = [UIImage initWithCVMat:maskL];
+    self.imageBlend = [UIImage initWithCVMat:matBlend];
 
 }
 
