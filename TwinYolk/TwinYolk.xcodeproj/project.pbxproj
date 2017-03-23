@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		630A1E301E83E888007877F3 /* seamless_cloning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630A1E2D1E83E888007877F3 /* seamless_cloning.cpp */; };
+		630A1E311E83E888007877F3 /* seamless_cloning_impl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 630A1E2F1E83E888007877F3 /* seamless_cloning_impl.cpp */; };
 		632D3FAB1E8100A6001B5587 /* graph.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FA81E8100A6001B5587 /* graph.cpp */; };
 		632D3FAC1E8100A6001B5587 /* maxflow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FAA1E8100A6001B5587 /* maxflow.cpp */; };
 		632D3FAE1E810102001B5587 /* instances.inc in Sources */ = {isa = PBXBuildFile; fileRef = 632D3FAD1E810102001B5587 /* instances.inc */; };
@@ -28,6 +30,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		630A1E2D1E83E888007877F3 /* seamless_cloning.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = seamless_cloning.cpp; sourceTree = "<group>"; };
+		630A1E2E1E83E888007877F3 /* seamless_cloning.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = seamless_cloning.hpp; sourceTree = "<group>"; };
+		630A1E2F1E83E888007877F3 /* seamless_cloning_impl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = seamless_cloning_impl.cpp; sourceTree = "<group>"; };
+		630A1E321E83E8A1007877F3 /* precomp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = precomp.hpp; sourceTree = "<group>"; };
 		632D3FA71E8100A6001B5587 /* block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = block.h; sourceTree = "<group>"; };
 		632D3FA81E8100A6001B5587 /* graph.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = graph.cpp; sourceTree = "<group>"; };
 		632D3FA91E8100A6001B5587 /* graph.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = graph.h; sourceTree = "<group>"; };
@@ -71,6 +77,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		630A1E2C1E83E888007877F3 /* Cloning */ = {
+			isa = PBXGroup;
+			children = (
+				630A1E321E83E8A1007877F3 /* precomp.hpp */,
+				630A1E2D1E83E888007877F3 /* seamless_cloning.cpp */,
+				630A1E2E1E83E888007877F3 /* seamless_cloning.hpp */,
+				630A1E2F1E83E888007877F3 /* seamless_cloning_impl.cpp */,
+			);
+			path = Cloning;
+			sourceTree = "<group>";
+		};
 		632D3FA61E8100A6001B5587 /* MaxFlow */ = {
 			isa = PBXGroup;
 			children = (
@@ -158,6 +175,7 @@
 		6336EA901E7D810400B4B774 /* Library */ = {
 			isa = PBXGroup;
 			children = (
+				630A1E2C1E83E888007877F3 /* Cloning */,
 				632D3FA61E8100A6001B5587 /* MaxFlow */,
 				6336EA911E7D810400B4B774 /* opencv2.framework */,
 			);
@@ -254,8 +272,10 @@
 				6336EA731E7D7ADE00B4B774 /* ViewController.mm in Sources */,
 				6336EA701E7D7ADE00B4B774 /* AppDelegate.m in Sources */,
 				632D3FAB1E8100A6001B5587 /* graph.cpp in Sources */,
+				630A1E301E83E888007877F3 /* seamless_cloning.cpp in Sources */,
 				632D3FAE1E810102001B5587 /* instances.inc in Sources */,
 				6336EA6D1E7D7ADE00B4B774 /* main.m in Sources */,
+				630A1E311E83E888007877F3 /* seamless_cloning_impl.cpp in Sources */,
 				632D3FAC1E8100A6001B5587 /* maxflow.cpp in Sources */,
 				6336EA8F1E7D7CFD00B4B774 /* UIImage+CVMat.mm in Sources */,
 			);

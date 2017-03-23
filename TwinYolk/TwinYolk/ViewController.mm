@@ -9,8 +9,12 @@
 #import "ViewController.h"
 #import "UIImage+CVMat.h"
 #import <opencv2/opencv.hpp>
+#import <opencv2/photo/photo.hpp>
 #import <opencv2/nonfree/nonfree.hpp>
 #import <opencv2/stitching/detail/seam_finders.hpp>
+#import <opencv2/stitching/detail/blenders.hpp>
+#import <opencv2/stitching/detail/exposure_compensate.hpp>
+#import "seamless_cloning.hpp"
 
 using namespace cv;
 
@@ -132,10 +136,10 @@ typedef struct ElementRGB {
 
     
     //mask 计算
-    cv::Mat maskL(matRectifyL.rows, matRectifyL.cols, CV_8UC3);
+    cv::Mat maskL(matRectifyL.rows, matRectifyL.cols, CV_8UC1);
     {
         maskL.setTo(cv::Scalar::all(0));
-        cv::Mat temp(matRectifyL.rows, matRectifyL.cols, CV_8UC3);
+        cv::Mat temp(matRectifyL.rows, matRectifyL.cols, CV_8UC1);
         temp.setTo(cv::Scalar::all(255));
         cv::warpPerspective(temp, maskL, homo, cv::Size(matRectifyL.cols, matRectifyL.rows), INTER_NEAREST);
     }
@@ -212,6 +216,88 @@ typedef struct ElementRGB {
 - (void)testSeamCutWithMatL:(cv::Mat &)matL
                        matR:(cv::Mat &)matR
                        maskL:(cv::Mat)maskL  {
+    //填补mat的空白区域
+    {
+        cv::Mat temp = matR.clone();
+        matL.copyTo(temp, maskL);
+        matL = temp;
+    }
+    
+    //self.imageBlend = [UIImage initWithCVMat:matR];
+    cv::Mat maskR = 255 - maskL;
+    //曝光补偿
+    float rgbDiff[3] = {0, 0, 0};
+    {
+        int count = 0;
+        for (int i = 0; i < matL.rows; i++) {
+            uchar *eleMask = maskL.ptr<uchar>(i);
+            ElementRGB *eleL = matL.ptr<ElementRGB>(i);
+            ElementRGB *eleR = matR.ptr<ElementRGB>(i);
+            for (int j = 0; j < matL.cols; j++) {
+                if (eleMask[j] == 255) {
+                    rgbDiff[0] += eleR[j].r - eleL[j].r;
+                    rgbDiff[1] += eleR[j].g - eleL[j].g;
+                    rgbDiff[2] += eleR[j].b - eleL[j].b;
+                }
+                count++;
+            }
+        }
+        if (count > 0) {
+            rgbDiff[0] /= count*2;
+            rgbDiff[1] /= count*2;
+            rgbDiff[2] /= count*2;
+            
+            //adjust rgb
+            for (int i = 0; i < matL.rows; i++) {
+                ElementRGB *eleL = matL.ptr<ElementRGB>(i);
+                ElementRGB *eleR = matR.ptr<ElementRGB>(i);
+                for (int j = 0; j < matL.cols; j++) {
+                    int temp = eleR[j].r - rgbDiff[0];
+                    temp = MAX(temp, 0);
+                    eleR[j].r = temp;
+                    temp = eleR[j].g - rgbDiff[1];
+                    temp = MAX(temp, 0);
+                    eleR[j].g = temp;
+                    temp = eleR[j].b - rgbDiff[2];
+                    temp = MAX(temp, 0);
+                    eleR[j].b = temp;
+                    
+                    temp = eleL[j].r + rgbDiff[0];
+                    temp = MIN(temp, 255);
+                    eleL[j].r = temp;
+                    temp = eleL[j].g + rgbDiff[1];
+                    temp = MIN(temp, 255);
+                    eleL[j].g = temp;
+                    temp = eleL[j].b + rgbDiff[2];
+                    temp = MIN(temp, 255);
+                    eleL[j].b = temp;
+                }
+            }
+        }
+        
+    
+//        cv::Ptr<detail::ExposureCompensator> compensator = detail::ExposureCompensator::createDefault(detail::ExposureCompensator::GAIN);
+//        std::vector<cv::Point> corners;
+//        corners.push_back(cv::Point(0, 0));
+//        corners.push_back(cv::Point(0, 0));
+//        
+//        std::vector<cv::Mat> images;
+//        images.push_back(matL);
+//        images.push_back(matR);
+//        
+//        //std::vector<std::pair<Mat,uchar> > masks;
+//        //masks.push_back(std::make_pair(maskL, 0));
+//        //masks.push_back(std::make_pair(maskR, 1));
+//        std::vector<cv::Mat> masks;
+//        masks.push_back(maskL);
+//        masks.push_back(maskR);
+//        compensator->feed(corners,
+//                          images,
+//                          masks);
+//        compensator->apply(0, cv::Point(0, 0), matL, maskL);
+//        compensator->apply(1, cv::Point(0, 0), matR, maskR);
+    }
+    
     cv::Mat matDiff(matL.rows, matL.cols, CV_8UC1);
     {
         matDiff.setTo(cv::Scalar::all(0));
@@ -221,12 +307,12 @@ typedef struct ElementRGB {
         
         for (int i = 0; i < matL.rows; i++) {
             uchar *eleDiff = matDiff.ptr<uchar>(i);
-            ElementRGB *eleMask = maskL.ptr<ElementRGB>(i);
+            uchar *eleMask = maskL.ptr<uchar>(i);
             ElementRGB *eleL = matBlurL.ptr<ElementRGB>(i);
             ElementRGB *eleR = matBlurR.ptr<ElementRGB>(i);
             for (int j = 0; j < matL.cols; j++) {
                 //                eleMask[j].a = 255;
-                if (eleMask[j].r == 255) {
+                if (eleMask[j] == 255) {
                     float diff = (eleL[j].r - eleR[j].r) * (float)(eleL[j].r - eleR[j].r);
                     diff += (eleL[j].g - eleR[j].g) * (float)(eleL[j].g - eleR[j].g);
                     diff += (eleL[j].b - eleR[j].b) * (float)(eleL[j].b - eleR[j].b);
@@ -311,20 +397,58 @@ typedef struct ElementRGB {
             idx++;
         }
         
-        ElementRGB *eleMask = maskL.ptr<ElementRGB>(y);
+        uchar *eleMask = maskL.ptr<uchar>(y);
         for (int x=maxX+1; x<maskL.cols; x++) {
-            eleMask[x].r = 0;
-            eleMask[x].g = 0;
-            eleMask[x].b = 0;
+            eleMask[x] = 0;
         }
     }
     
-    cv::Mat matBlend = matR.clone();
-    matL.copyTo(matBlend, maskL);
-    
+    //图像融合
+    cv::Mat matBlend;
+    {
+        cv::boxFilter(maskL, maskL, -1, cv::Size(41,41));
+        matBlend = matR.clone();
+        DY::seamlessClone(matL, matR, maskL, cv::Point(matR.cols/2, matR.rows/2), matBlend, DY::NORMAL_CLONE);
+        
+//        cv::boxFilter(maskL, maskL, -1, cv::Size(41,41));
+//        maskR = 255 - maskL;
+        
+//        {
+//            detail::MultiBandBlender blender;
+//            blender.setNumBands(3);
+//            blender.prepare(cv::Rect(0, 0, matL.cols, matL.rows));
+//            blender.feed(matL, maskL, cv::Point(0,0));
+//            
+//            
+//            blender.feed(matR, maskR, cv::Point(0,0));
+//            {
+//                cv::Mat ignore;
+//                blender.blend(matBlend, ignore);
+//                matBlend.convertTo(matBlend, (matBlend.type() / 8) * 8);
+//            }
+//        }
+
+        
+        
+//        cv::GaussianBlur(maskL, maskL, cv::Size(7,7), 3);
+//        maskR = 255 - maskL;
+//        {
+//            std::vector<cv::Mat> maskLs;
+//            maskLs.push_back(maskL);
+//            maskLs.push_back(maskL);
+//            maskLs.push_back(maskL);
+//            std::vector<cv::Mat> maskRs;
+//            maskRs.push_back(maskR);
+//            maskRs.push_back(maskR);
+//            maskRs.push_back(maskR);
+//            matBlend = matL.mul(maskLs) + matR.mul(maskRs);
+//        }
+        
+    }
+
     
     self.imageL = [UIImage initWithCVMat:matL];
-    self.imageR = [UIImage initWithCVMat:maskL];
+    self.imageR = [UIImage initWithCVMat:matR];
     self.imageBlend = [UIImage initWithCVMat:matBlend];
 
 }
